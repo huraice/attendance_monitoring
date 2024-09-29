@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <title>Enroll Student</title>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Enroll Student</h2>
+        <form id="enrollForm" method="POST">
+            <div class="form-group">
+                <label for="student_name">Student Name:</label>
+                <input type="text" class="form-control" id="student_name" name="student_name" required>
+            </div>
+            <div class="form-group">
+                <label for="face_image">Face Image:</label>
+                <video id="video" width="640" height="480" autoplay></video>
+                <button type="button" class="btn btn-secondary" id="captureButton">Capture Face</button>
+                <input type="hidden" id="face_image" name="face_image">
+            </div>
+            <button type="submit" class="btn btn-primary">Enroll</button>
+        </form>
+        <a href="/">Back to Menu</a>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const captureButton = document.getElementById('captureButton');
+
+        // Get access to the camera
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                console.error("Error accessing the camera: ", err);
+            });
+
+        // Capture the face and send it to the form
+        captureButton.addEventListener('click', () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 640;
+            canvas.height = 480;
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, 640, 480);
+            const faceDataUrl = canvas.toDataURL('image/png');
+            document.getElementById('face_image').value = faceDataUrl; // Store image in hidden input
+        });
+    </script>
+</body>
+</html>

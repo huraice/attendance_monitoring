@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <title>Add Attendance</title>
+</head>
+<body>
+     <h1>Attendance Monitoring System</h1>
+    <button id="openWebcam">Add Attendance</button>
+    <video id="webcam" autoplay playsinline></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <p id="message"></p>
+
+    <script>
+        const openWebcamButton = document.getElementById('openWebcam');
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+        const message = document.getElementById('message');
+
+        // Open webcam
+        openWebcamButton.addEventListener('click', () => {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    video.srcObject = stream;
+                })
+                .catch(err => {
+                    console.error("Error accessing the webcam: " + err);
+                    message.innerText = "Error accessing the webcam";
+                });
+        });
+
+        // Capture the face when face is detected (for simplicity, using capture button here)
+        video.addEventListener('play', () => {
+            const interval = setInterval(() => {
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const capturedImage = canvas.toDataURL('image/png');
+
+                // Send the captured face to the Flask backend
+                fetch('/add_attendance', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ face_image: capturedImage })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    message.innerText = data.message;
+                    clearInterval(interval); // Stop capturing once a match is found
+                })
+                .catch(error => {
+                    console.error('There has been a problem with your fetch operation:', error);
+                    message.innerText = "Error: " + error.message;
+                });
+            }, 5000);  // Capture face every 5 seconds (can adjust this interval)
+        });
+    </script>
+</body>
+</html>
